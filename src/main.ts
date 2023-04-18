@@ -1,4 +1,17 @@
-const { invoke } = window.__TAURI__.tauri;
+type TauriEvent<T> = {
+  event: string // the event name
+  payload: Array<number> // the payload object
+}
+// create an interface for a JSON object value
+// interface JSONObject {
+//   [key: string]: number
+// }
+
+// create an interface for a JSON array value
+// interface JSONArray extends Array<JSONObject> {}
+
+const { invoke } = (window as any).__TAURI__.tauri;
+const { listen }=(window as any).__TAURI__.event;
 // import { appWindow } from '@tauri-apps/api/tauri'
 
 // let greetInputEl;
@@ -35,7 +48,7 @@ async function movewindow() {
 function startstopmovewindow(e: MouseEvent){
   // {
     // tauri.invoke('drag_window');
-    if (e.buttons === 1 && e.target?.tagName !== 'BUTTON') 
+    if (e.buttons === 1 && (e.target as HTMLElement).tagName !== 'BUTTON') 
     {
       // tauri.invoke('drag_window');
       // if (e.target.hasAttribute('data-tauri-drag-region') && e.buttons === 1) 
@@ -79,16 +92,17 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 let last_upload: number=0, last_download:number=0, upload_speed:number, down_speed:number
 
-ssestart()
-
-function ssestart(){
-  const source = new EventSource("http://127.0.0.1:7798/stream");
-
-// listen for messages
-  source.onmessage = function(event) {
-    console.log(event)
+// ssestart()
+listen('message', (event: TauriEvent<any>) => {
+  // event.event is the event name (useful if you want to use a single callback fn for multiple event types)
+  // event.payload is the payload object
+  // console.log(`got ${event.event} with payload ${event.payload.message}`)
+  // function(event) {
+    // console.log(event)
+    console.log(event.payload[0])
+    console.log(event.payload)
     // parse the JSON data
-    const data = JSON.parse(event.data);
+    const data = event.payload;
     let upload=data[0]
     let download=data[1]
     let todaytotal=data[2]
@@ -114,8 +128,45 @@ function ssestart(){
     // display the data in HTML
     document.getElementById("showspeed")!.innerHTML = size(down_speed,false)+"ps↓ "+ size(upload_speed,false)+"ps↑ "+ size(todaytotal,true);
     // document.getElementById("showspeed").innerHTML =down_speed+"ps↓ "+ upload_speed+"ps↑ "+ todaytotal;
-  };
-}
+  // };
+})
+
+// function ssestart(){
+  
+//   const source = new EventSource("http://127.0.0.1:7798/stream");
+
+// // listen for messages
+//   source.onmessage = function(event) {
+//     console.log(event)
+//     // parse the JSON data
+//     const data = JSON.parse(event.data);
+//     let upload=data[0]
+//     let download=data[1]
+//     let todaytotal=data[2]
+
+//     if (last_upload > 0){
+//        if( upload < last_upload)
+//                 upload_speed = 0
+//             else
+//                 upload_speed = upload - last_upload
+//     }
+           
+
+//         if (last_download > 0){
+//            if (download < last_download)
+//                 down_speed = 0
+//             else
+//                 down_speed = download - last_download
+//         }
+           
+
+//         last_upload = upload
+//         last_download = download
+//     // display the data in HTML
+//     document.getElementById("showspeed")!.innerHTML = size(down_speed,false)+"ps↓ "+ size(upload_speed,false)+"ps↑ "+ size(todaytotal,true);
+//     // document.getElementById("showspeed").innerHTML =down_speed+"ps↓ "+ upload_speed+"ps↑ "+ todaytotal;
+//   };
+// }
 
 // function size(speed:number,isbytes:boolean){
 //   if(speed===null)

@@ -19,13 +19,16 @@ panic = "abort"
 tauri-build = { version = "1.2", features = [] }
 
 [dependencies]
-ns_sse= {path="../speedlib/"}
+# ns_sse= {path="../speedlib/"}
 tauri = { version = "1.2", features = ["process-exit", "shell-open", "window-set-always-on-top", "window-start-dragging"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = "0.4.23"
-prefstore= {git="https://github.com/visnkmr/prefstore.git"}
+prefstore= "0.5.0"
 human-panic= {git="https://github.com/visnkmr/save-crash-logs-rs.git"}
+sysinfo = { version="0.28.2", default-features = false }
+byte-unit = { features = ["u128"], default-features = false, version = "4.0.17" }
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

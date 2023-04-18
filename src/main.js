@@ -1,5 +1,6 @@
 "use strict";
 const { invoke } = window.__TAURI__.tauri;
+const { listen } = window.__TAURI__.event;
 async function exit() {
     await invoke("exit");
 }
@@ -10,7 +11,7 @@ async function movewindow() {
     await invoke("startmove");
 }
 function startstopmovewindow(e) {
-    if (e.buttons === 1 && e.target?.tagName !== 'BUTTON') {
+    if (e.buttons === 1 && e.target.tagName !== 'BUTTON') {
         movewindow();
     }
 }
@@ -25,32 +26,29 @@ window.addEventListener("DOMContentLoaded", () => {
         ?.addEventListener("click", () => minimise());
 });
 let last_upload = 0, last_download = 0, upload_speed, down_speed;
-ssestart();
-function ssestart() {
-    const source = new EventSource("http://127.0.0.1:7798/stream");
-    source.onmessage = function (event) {
-        console.log(event);
-        const data = JSON.parse(event.data);
-        let upload = data[0];
-        let download = data[1];
-        let todaytotal = data[2];
-        if (last_upload > 0) {
-            if (upload < last_upload)
-                upload_speed = 0;
-            else
-                upload_speed = upload - last_upload;
-        }
-        if (last_download > 0) {
-            if (download < last_download)
-                down_speed = 0;
-            else
-                down_speed = download - last_download;
-        }
-        last_upload = upload;
-        last_download = download;
-        document.getElementById("showspeed").innerHTML = size(down_speed, false) + "ps↓ " + size(upload_speed, false) + "ps↑ " + size(todaytotal, true);
-    };
-}
+listen('message', (event) => {
+    console.log(event.payload[0]);
+    console.log(event.payload);
+    const data = event.payload;
+    let upload = data[0];
+    let download = data[1];
+    let todaytotal = data[2];
+    if (last_upload > 0) {
+        if (upload < last_upload)
+            upload_speed = 0;
+        else
+            upload_speed = upload - last_upload;
+    }
+    if (last_download > 0) {
+        if (download < last_download)
+            down_speed = 0;
+        else
+            down_speed = download - last_download;
+    }
+    last_upload = upload;
+    last_download = download;
+    document.getElementById("showspeed").innerHTML = size(down_speed, false) + "ps↓ " + size(upload_speed, false) + "ps↑ " + size(todaytotal, true);
+});
 const KB = 1024;
 const MB = KB ** 2;
 const GB = KB ** 3;
