@@ -1,8 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::{thread, env, process};
-use ns_sse::*;
+use std::{thread, env, process, time::Duration};
+// use ns_sse::*;
 use tauri::{Manager, AppHandle, Window};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -50,9 +50,16 @@ fn startmove(window: Window){
 //     // format!("start")
 //   }
 const appname: &str = "ns_gui_sse";
+mod speedserve;
+// use crate::speedserve;
 
 fn main() {
-
+//   thread::spawn(move || loop {
+//     // println!("fromhere------------>1");
+//     // memusg();
+//     thread::sleep(Duration::from_secs(1));
+// });
+  // speedserve::serve();
   human_panic::setup_panic!(human_panic::Metadata {
     version: env!("CARGO_PKG_VERSION").into(),
     name: env!("CARGO_PKG_NAME").into(),
@@ -71,7 +78,7 @@ let mut iname=String::new();
         Some(g)=>{
             iname=g.to_owned();
              if(iname=="tu"){
-                ns_sse::serve();
+                speedserve::serve();
                 process::exit(0);
             }
         },
@@ -79,10 +86,37 @@ let mut iname=String::new();
             iname="all".to_string();
         }
     }
-  thread::spawn(move ||{
-    ns_sse::startserving(iname);
-  });
+  // thread::spawn(move ||{
+  //   ns_sse::startserving(iname);
+  // });
     tauri::Builder::default()
+    // .setup(|app| {
+    //   // get an instance of AppHandle
+    //   let app_handle = app.handle();
+    //   // spawn a thread
+    //   std::thread::spawn(move || {
+    //     // emit the 'message' event to all webview windows on the frontend
+    //     speedserve::serve(app_handle);
+        
+    //   thread::sleep(Duration::from_secs(1));
+    //   })
+        .setup(|app| {
+          // get an instance of AppHandle
+          let app_handle = app.handle();
+          // spawn a thread
+          // std::thread::spawn(move || {
+            // emit the 'message' event to all webview windows on the frontend
+            // app_handle.emit_all("message", Payload {
+            //   message: "Hello from Rust!".into(),
+            // })
+            // .unwrap();
+
+          speedserve::startserving(iname,app_handle);
+          
+          // thread::sleep(Duration::from_secs(1));
+          // });
+          Ok(())
+        })
         .invoke_handler(tauri::generate_handler!
             [
             // greet,

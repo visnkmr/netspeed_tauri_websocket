@@ -11,6 +11,7 @@ use sysinfo::{SystemExt, NetworkExt, System};
 // use abserde::*;
 // use abserdeapi::*;
 use prefstore::*;
+use tauri::{AppHandle, Manager};
 const APPNAME:&str="ns_sse_aio";
 pub fn serve(){
     let date = Local::now();
@@ -19,11 +20,8 @@ pub fn serve(){
         getpreference(APPNAME,&current_date,0 as u128).parse::<u128>().unwrap()
     ).get_appropriate_unit(true));
 }
-pub fn startserving(iname:String) {
-    
-    //to store interface name
-    
-        
+pub fn startserving(iname:String,app_handle:AppHandle) {
+
     let mut dtpr:Vec<u64>=vec![0,0,0]; 
     let date = Local::now();
     let mut current_date = date.format("%Y-%m-%d").to_string();
@@ -40,18 +38,26 @@ pub fn startserving(iname:String) {
     let mut sys = System::new();
     let mut tt:u128=getpreference(APPNAME,&current_date,0 as u128).parse::<u128>().unwrap();
     let mut perminute=0;
+    thread::spawn(move || loop {
+        app_handle.emit_all("message", forsse(&iname, &mut sys, &mut tt, &mut perminute))
+            .unwrap();
+        // println!("fromhere------------>1");
+        // memusg();
+        // tauri::event::emit("my-event", Some(json!({ "message": "Hello from Rust" })))?;
+        thread::sleep(Duration::from_secs(1));
+    });
     //customize port and address here.
-    match TcpListener::bind("127.0.0.1:7798") {
-        Ok(listener) =>{
-            for stream in listener.incoming(){
-                let stream = stream.unwrap();
-                    handle_con(stream,iname.clone(),&mut sys,&mut tt,&mut perminute);
-            }
-        },
-        Err(e) =>{
-            println!("Internet issue.\n Error:{}",e)
-        }
-    }
+    // match TcpListener::bind("127.0.0.1:7798") {
+    //     Ok(listener) =>{
+    //         for stream in listener.incoming(){
+    //             let stream = stream.unwrap();
+    //                 handle_con(stream,iname.clone(),&mut sys,&mut tt,&mut perminute);
+    //         }
+    //     },
+    //     Err(e) =>{
+    //         println!("Internet issue.\n Error:{}",e)
+    //     }
+    // }
     
 }
 fn handle_con(mut stream:TcpStream,iname:String,sys:&mut System,tt:&mut u128,perminute:&mut i32){
@@ -109,7 +115,7 @@ fn handle_con(mut stream:TcpStream,iname:String,sys:&mut System,tt:&mut u128,per
                             "id: {}\nevent: message\ndata: {}\n\n",
                             counter,forsse(&iname,sys,tt,perminute)
                         );
-                        println!("{}",data);
+                        // println!("{}",data);
                         // write the data to the stream
                         match stream.write_all(data.as_bytes()) {
                             Ok(_) => {
